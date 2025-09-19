@@ -3624,6 +3624,11 @@ if (window.checkExtensionLoaded) {
           reasonElement.textContent = `Reason: ${reason}`;
         }
 
+        const reasonElement = document.getElementById("check-block-reason");
+        if (reasonElement) {
+          reasonElement.textContent = `Reason: ${reason}`;
+        }
+
         logger.log("Fallback page content replacement completed");
       } catch (fallbackError) {
         logger.error(
@@ -3679,7 +3684,7 @@ if (window.checkExtensionLoaded) {
         ? ` (Score: ${analysisData.score}/${analysisData.threshold})`
         : "";
       const messageText = `${reason}${detailsText}`;
-      
+
       // Determine banner type and styling based on analysis data
       let bannerTitle = "Suspicious Microsoft 365 Login Page";
       let bannerIcon = "⚠️";
