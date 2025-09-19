@@ -3618,11 +3618,6 @@ if (window.checkExtensionLoaded) {
         </body>
         </html>
       `;
-        
-        const reasonElement = document.getElementById("check-block-reason");
-        if (reasonElement) {
-          reasonElement.textContent = `Reason: ${reason}`;
-        }
 
         const reasonElement = document.getElementById("check-block-reason");
         if (reasonElement) {
