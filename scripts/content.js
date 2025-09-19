@@ -3611,13 +3611,18 @@ if (window.checkExtensionLoaded) {
             <h1>Phishing Site Blocked</h1>
             <p><strong>Microsoft 365 login page detected on suspicious domain.</strong></p>
             <p>This site may be attempting to steal your credentials and has been blocked for your protection.</p>
-            <div class="reason">Reason: ${reason}</div>
+            <div class="reason" id="check-block-reason"></div>
             <div class="reason">Blocked by: Check</div>
             <div class="reason">No override available - contact your administrator if this is incorrect</div>
           </div>
         </body>
         </html>
       `;
+        
+        const reasonElement = document.getElementById("check-block-reason");
+        if (reasonElement) {
+          reasonElement.textContent = `Reason: ${reason}`;
+        }
 
         logger.log("Fallback page content replacement completed");
       } catch (fallbackError) {
@@ -3673,7 +3678,8 @@ if (window.checkExtensionLoaded) {
       const detailsText = analysisData?.score
         ? ` (Score: ${analysisData.score}/${analysisData.threshold})`
         : "";
-
+      const messageText = `${reason}${detailsText}`;
+      
       // Determine banner type and styling based on analysis data
       let bannerTitle = "Suspicious Microsoft 365 Login Page";
       let bannerIcon = "⚠️";
@@ -3704,31 +3710,32 @@ if (window.checkExtensionLoaded) {
         bannerColor = "linear-gradient(135deg, #ff5722, #d84315)"; // Orange-red for high risk
       }
 
-      const bannerContent = `
-      <div style="display: flex; align-items: center; justify-content: center; gap: 16px; position: relative; padding-right: 48px;">
-        <span style="font-size: 24px;">${bannerIcon}</span>
-        <div>
-          <strong>${bannerTitle}</strong><br>
-          <small>${reason}${detailsText}</small>
-        </div>
-        <button onclick="this.parentElement.parentElement.remove(); document.body.style.marginTop = '0'; window.showingBanner = false;" title="Dismiss" style="
-          position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-          background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
-          color: white; padding: 0; border-radius: 4px; cursor: pointer;
-          width: 24px; height: 24px; min-width: 24px; min-height: 24px; max-width: 24px; max-height: 24px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 14px; font-weight: bold; line-height: 1; box-sizing: border-box;
-          font-family: monospace;
-        ">×</button>
-      </div>
-    `;
-
       // Check if banner already exists
       let banner = document.getElementById("ms365-warning-banner");
 
       if (banner) {
         // Update existing banner content and color
-        banner.innerHTML = bannerContent;
+        const iconSpan = banner.querySelector(
+          ".ms365-warning-banner-icon"
+        );
+        if (iconSpan) {
+          iconSpan.textContent = bannerIcon;
+        }
+
+        const titleElement = banner.querySelector(
+          ".ms365-warning-banner-title"
+        );
+        if (titleElement) {
+          titleElement.textContent = bannerTitle;
+        }
+
+        const messageElement = banner.querySelector(
+          ".ms365-warning-banner-message"
+        );
+        if (messageElement) {
+          messageElement.textContent = messageText;
+        }
+
         banner.style.background = bannerColor;
 
         // Ensure page content is still pushed down
@@ -3756,7 +3763,51 @@ if (window.checkExtensionLoaded) {
       text-align: center !important;
     `;
 
-      banner.innerHTML = bannerContent;
+      const contentWrapper = document.createElement("div");
+      contentWrapper.className = "ms365-warning-banner-content";
+      contentWrapper.style.cssText =
+        "display: flex; align-items: center; justify-content: center; gap: 16px; position: relative; padding-right: 48px;";
+
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "ms365-warning-banner-icon";
+      iconSpan.style.fontSize = "24px";
+      iconSpan.textContent = bannerIcon;
+
+      const textContainer = document.createElement("div");
+
+      const titleElement = document.createElement("strong");
+      titleElement.className = "ms365-warning-banner-title";
+      titleElement.textContent = bannerTitle;
+
+      const lineBreak = document.createElement("br");
+
+      const messageElement = document.createElement("small");
+      messageElement.className = "ms365-warning-banner-message";
+      messageElement.textContent = messageText;
+
+      textContainer.appendChild(titleElement);
+      textContainer.appendChild(lineBreak);
+      textContainer.appendChild(messageElement);
+
+      const dismissButton = document.createElement("button");
+      dismissButton.type = "button";
+      dismissButton.title = "Dismiss";
+      dismissButton.className = "ms365-warning-banner-dismiss";
+      dismissButton.style.cssText =
+        "position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0; border-radius: 4px; cursor: pointer; width: 24px; height: 24px; min-width: 24px; min-height: 24px; max-width: 24px; max-height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; box-sizing: border-box; font-family: monospace;";
+      dismissButton.textContent = "×";
+      dismissButton.addEventListener("click", () => {
+        banner.remove();
+        document.body.style.marginTop = "0";
+        showingBanner = false;
+        window.showingBanner = false;
+      });
+
+      contentWrapper.appendChild(iconSpan);
+      contentWrapper.appendChild(textContainer);
+      contentWrapper.appendChild(dismissButton);
+
+      banner.appendChild(contentWrapper);
       document.body.appendChild(banner);
 
       // Push page content down to avoid covering login header
